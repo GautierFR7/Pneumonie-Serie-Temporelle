@@ -1,1 +1,3 @@
 # Pneumonie-Serie-Temporelle
+
+Ce projet en R a pour objectif de prédire les cas de pneumonie à Hong Kong. L'analyse des séries temporelles joue un rôle clé dans la compréhension et la prévision des dynamiques épidémiologiques. Dans cette étude, nous analysons les variations des cas de pneumonie enregistrés à Hong Kong à l'aide de divers outils statistiques et de modélisation. Nous utilisons des techniques de décomposition des séries temporelles pour mettre en évidence les tendances et les effets saisonniers, puis nous appliquons un modèle ARIMA pour capturer les dépendances temporelles. L'objectif est d'identifier et de mieux comprendre les tendances et fluctuations des cas de pneumonie dans cette région.
