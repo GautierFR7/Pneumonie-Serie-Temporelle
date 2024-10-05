@@ -1,0 +1,133 @@
+---
+title: "Recherche"
+author: "FRANCOIS Gautier"
+date: "2024-05-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(forecast)
+library(caschrono)
+library(tidyverse)
+```
+
+```{r}
+data <- read.csv("Hongkong_monthly TB weather 20190810 summit.csv", header = TRUE, sep = ",")
+```
+
+```{r}
+ggtsdisplay(data$count, lag.max = 36)
+ggtsdisplay(data$count, plot.type = "scatter")
+```
+
+
+# Recherche de la tendance
+
+```{r}
+tend_data <- diff(data$count, differences = 2)
+ggtsdisplay(tend_data, plot.type = "scatter")
+```
+
+
+# Recherche de la saisonnalité
+
+```{r}
+sais_data <- diff(data$count, lags = 6)
+ggtsdisplay(sais_data, plot.type = "scatter")
+```
+
+
+# Création du modèle
+
+```{r}
+t <- data$time
+x <- outer(t,1:6)*(pi/6)
+
+df <- data.frame(nb = data$count, t=t, t2=t^2, cos(x), sin(x[,-6]))
+names(df)[4:14] <- c(paste("cos", 1:6),paste("sin", 1:5))
+
+data_lm <- lm(nb ~ ., data = df)
+
+```
+
+```{r}
+ggplot(data, aes(x = time, y = count)) +
+  geom_line() +
+  geom_line(aes(y = predict(data_lm, newdata = df)), col = "red")
+```
+
+# test avec log
+
+```{r}
+data_log <- log(data$count)
+ggplot(data, aes(x = time, y = data_log)) +
+  geom_line() 
+```
+
+```{r}  
+t <- data$time
+x <- outer(t,1:6)*(pi/6)
+
+df1 <- data.frame(nb = data_log, t=t, t2=t^2, cos(x), sin(x[,-6]))
+names(df1)[4:14] <- c(paste("cos", 1:6),paste("sin", 1:5))
+
+data_lm1 <- lm(nb ~ ., data = df1)
+
+ggplot(data, aes(x = time, y = data_log)) +
+  geom_line() +
+  geom_line(aes(y = predict(data_lm1, newdata = df1)), col = "red")
+```
+
+Pour résumer, choix de saisonalité de 12, tendanc de polynome 2. Modèle linéaire avec log. 
+
+
+# Etude des résidus
+
+
+```{r}
+# pour log
+residus1 <- residuals(data_lm1)
+ggtsdisplay(residus1)
+```
+
+```{r}
+ajustement_residus <- arima(residus1, order = c(3,0,0))
+ggtsdisplay(ajustement_residus$residuals)
+```
+
+```{r}
+ajustement_residus1 <- arima(residus1, order = c(3,1,3))
+ggtsdisplay(ajustement_residus1$residuals)
+```
+# test de blancheur
+
+```{r}
+Box.test(ajustement_residus$residuals, lag = 25)
+```
+
+```{r}
+Box.test(ajustement_residus1$residuals, lag = 25)
+```
+# ajustement complet
+
+```{r}
+ajustement_complet <- Arima(data_log, order = c(3,1,3), xreg = as.matrix(df[,-1]))
+Box.test(ajustement_complet$residuals, lag = 25)
+```
+
+# fin
+```{r}
+df2 <- data.frame(
+  lognb = data_log,
+  time = data$time,
+  ajustement = ajustement_complet$fitted
+)
+
+ggplot(df2, aes(x = time, y = lognb)) +
+  geom_line() +
+  geom_line(aes(y = ajustement), col = "red")
+```
+
+
+
+
